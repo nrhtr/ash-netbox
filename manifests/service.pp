@@ -20,29 +20,72 @@ class netbox::service (
 ){
 
   $netbox_pid_file = '/var/tmp/netbox.pid'
+  $netbox_home     = "${install_root}/netbox"
 
-  $service_params_netbox_rq = {
-    'netbox_home'  => "${install_root}/netbox",
-    'user'         => $user,
-    'group'        => $group,
+  # Install netbox unit
+  systemd::unit { 'netbox':
+    ensure   => 'present',
+    type     => 'service',
+    settings => {
+      'Unit'    =>  {
+        'Description'   => 'NetBox WSGI Service',
+        'Documentation' => 'https://netbox.readthedocs.io/en/stable/',
+        'After'         => 'network-online.target',
+        'Wants'         => 'network-online.target',
+      },
+      'Service' => {
+        'Type'             => 'simple',
+        'User'             => $user,
+        'Group'            => $group,
+        'PIDFile'          => $netbox_pid_file,
+        'WorkingDirectory' => $netbox_home,
+        'ExecStart'        => "${netbox_home}/venv/bin/gunicorn --pid ${netbox_pid_file} --pythonpath ${netbox_home}/netbox --config ${netbox_home}/gunicorn.py netbox.wsgi",
+        'Restart'          => 'on-failure',
+        'RestartSec'       => '30',
+        'PrivateTmp'       => 'true',
+      },
+      'Install' => {
+        'WantedBy' => 'multi-user.target'
+      },
+    },
   }
 
-  $service_params_netbox = {
-    'netbox_home'  => "${install_root}/netbox",
-    'user'         => $user,
-    'group'        => $group,
-    'pidfile'      => $netbox_pid_file,
+  # Install netbox-rq unit
+  systemd::unit { 'netbox-rq':
+    ensure   => 'present',
+    type     => 'service',
+    settings => {
+      'Unit'    =>  {
+        'Description'   => 'NetBox Request Queue Worker',
+        'Documentation' => 'https://netbox.readthedocs.io/en/stable/',
+        'After'         => 'network-online.target',
+        'Wants'         => 'network-online.target',
+      },
+      'Service' => {
+        'Type'             => 'simple',
+        'User'             => $user,
+        'Group'            => $group,
+        'WorkingDirectory' => $netbox_home,
+        'ExecStart'        => "${netbox_home}/venv/bin/python3 ${netbox_home}/netbox/manage.py rqworker",
+        'Restart'          => 'on-failure',
+        'RestartSec'       => '30',
+        'PrivateTmp'       => 'true',
+      },
+      'Install' => {
+        'WantedBy' => 'multi-user.target',
+      },
+    },
   }
 
-  systemd::unit_file { 'netbox-rq.service':
-    content => epp('netbox/netbox-rq.service.epp', $service_params_netbox_rq),
-    enable  => true,
-    active  => true,
+  # Manage netbox service
+  service { 'netbox':
+    ensure => 'running',
+    enable => 'true',
   }
 
-  systemd::unit_file { 'netbox.service':
-    content => epp('netbox/netbox.service.epp', $service_params_netbox),
-    enable  => true,
-    active  => true,
+  # Manage netbox-rq service
+  service { 'netbox-rq':
+    ensure => 'running',
+    enable => 'true',
   }
 }
