@@ -279,7 +279,15 @@ class netbox (
   String $short_datetime_format = 'Y-m-d H:i',
 ) {
 
-  Class['netbox::database'] -> Class['netbox::redis'] -> Class['netbox::install'] -> Class['netbox::config'] ~> Class['netbox::service']
+  if $handle_database and $handle_redis {
+    Class['netbox::database'] -> Class['netbox::redis'] -> Class['netbox::install'] -> Class['netbox::config'] ~> Class['netbox::service']
+  } elsif $handle_database {
+    Class['netbox::database'] -> Class['netbox::install'] -> Class['netbox::config'] ~> Class['netbox::service']
+  } elsif $handle_redis {
+    Class['netbox::redis'] -> Class['netbox::install'] -> Class['netbox::config'] ~> Class['netbox::service']
+  } else {
+    Class['netbox::install'] -> Class['netbox::config'] ~> Class['netbox::service']
+  }
 
   if $handle_database {
     class { 'netbox::database':
