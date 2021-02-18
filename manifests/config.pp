@@ -196,6 +196,14 @@ class netbox::config (
     mode    => '0644',
   }
 
+  if $session_file_path {
+      file { $session_file_path:
+        ensure => 'directory',
+        owner  => $user,
+        group  => $group,
+      }
+  }
+
   $config_file = "${software_directory}/netbox/netbox/configuration.py"
 
   file { $config_file:
