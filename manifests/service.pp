@@ -24,24 +24,24 @@ class netbox::service (
 
   # Install netbox unit
   systemd::unit { 'netbox':
-    ensure    => 'present',
-    type      => 'service',
-    settings  => {
+    ensure   => 'present',
+    type     => 'service',
+    settings => {
       'Unit'    =>  {
-        'Description'   => NetBox WSGI Service,
-        'Documentation' => https://netbox.readthedocs.io/en/stable/,
-        'After'         => network-online.target,
-        'Wants'         => network-online.target,
+        'Description'   => 'NetBox WSGI Service',
+        'Documentation' => 'https://netbox.readthedocs.io/en/stable/',
+        'After'         => 'network-online.target',
+        'Wants'         => 'network-online.target',
       },
       'Service' => {
-        'Type'             => simple
+        'Type'             => 'simple',
         'User'             => $user,
         'Group'            => $group,
         'PIDFile'          => $netbox_pid_file,
         'WorkingDirectory' => $netbox_home,
         'ExecStart'        => "${netbox_home}/venv/bin/gunicorn --pid ${netbox_pid_file} --pythonpath ${netbox_home}/netbox --config ${netbox_home}/gunicorn.py netbox.wsgi",
-        'Restart'          => on-failure,
-        'RestartSec'       => 30,
+        'Restart'          => 'on-failure',
+        'RestartSec'       => '30',
         'PrivateTmp'       => 'true',
       },
       'Install' => {
@@ -52,23 +52,23 @@ class netbox::service (
 
   # Install netbox-rq unit
   systemd::unit { 'netbox-rq':
-    ensure    => 'present',
-    type      => 'service',
-    settings  => {
+    ensure   => 'present',
+    type     => 'service',
+    settings => {
       'Unit'    =>  {
-        'Description'   => NetBox Request Queue Worker,
-        'Documentation' => https://netbox.readthedocs.io/en/stable/,
-        'After'         => network-online.target,
-        'Wants'         => network-online.target,
+        'Description'   => 'NetBox Request Queue Worker',
+        'Documentation' => 'https://netbox.readthedocs.io/en/stable/',
+        'After'         => 'network-online.target',
+        'Wants'         => 'network-online.target',
       },
       'Service' => {
-        'Type'             => simple
+        'Type'             => 'simple',
         'User'             => $user,
         'Group'            => $group,
         'WorkingDirectory' => $netbox_home,
         'ExecStart'        => "${netbox_home}/venv/bin/python3 ${netbox_home}/netbox/manage.py rqworker",
-        'Restart'          => on-failure,
-        'RestartSec'       => 30,
+        'Restart'          => 'on-failure',
+        'RestartSec'       => '30',
         'PrivateTmp'       => 'true',
       },
       'Install' => {
