@@ -167,6 +167,16 @@ class netbox::install (
     }
   }
 
+  # this module requires gunicorn, which by default is not installed by older Netbox versions
+  if versioncmp($version, '2.7.9') < 0 {
+    file_line { 'gunicorn':
+      path    => "${software_directory}/local_requirements.txt",
+      line    => 'gunicorn',
+      notify  => Exec['install python requirements'],
+      require => File['local_requirements']
+    }
+  }
+
   if $include_ldap {
     file_line { 'ldap':
       path    => "${software_directory}/local_requirements.txt",
