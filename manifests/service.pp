@@ -83,9 +83,13 @@ class netbox::service (
     enable => 'true',
   }
 
-  # Manage netbox-rq service
-  service { 'netbox-rq':
-    ensure => 'running',
-    enable => 'true',
+  # HACK: does not account for wanting rq/webhooks on older versions
+  # 2.6 release makes them mandatory
+  if versioncmp($netbox::version, '2.6.0') >= 0 {
+    # Manage netbox-rq service
+    service { 'netbox-rq':
+      ensure => 'running',
+      enable => 'true',
+    }
   }
 }
